@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Holiday Home Booking Tracker</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Holiday Home Booking Tracker</h1>
+      <p>Track bookings, stay length, and monthly occupancy.</p>
+    </header>
+
+    <section class="panel booking-form-panel">
+      <h2>New Booking</h2>
+      <form id="booking-form">
+        <div class="form-row">
+          <label for="guestName">Guest Name</label>
+          <input type="text" id="guestName" name="guestName" required />
+        </div>
+
+        <div class="form-row-inline">
+          <div class="form-row">
+            <label for="checkIn">Check-in</label>
+            <input type="date" id="checkIn" name="checkIn" required />
+          </div>
+          <div class="form-row">
+            <label for="checkOut">Check-out</label>
+            <input type="date" id="checkOut" name="checkOut" required />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label for="notes">Notes</label>
+          <textarea id="notes" name="notes" rows="2" placeholder="Optional notes"></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit">Save Booking</button>
+          <button type="button" id="clear-form">Clear</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel summary-panel">
+      <h2>Summary</h2>
+      <div class="summary-grid">
+        <div class="summary-card">
+          <span class="summary-label">Total bookings</span>
+          <strong id="totalBookings">0</strong>
+        </div>
+        <div class="summary-card">
+          <span class="summary-label">Total nights</span>
+          <strong id="totalNights">0</strong>
+        </div>
+        <div class="summary-card">
+          <span class="summary-label">Current month occupancy</span>
+          <strong id="currentOccupancy">0%</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel booking-list-panel">
+      <h2>Bookings</h2>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Guest</th>
+              <th>Check-in</th>
+              <th>Check-out</th>
+              <th>Nights</th>
+              <th>Notes</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="booking-list"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel calendar-panel">
+      <div class="calendar-header">
+        <h2>Calendar</h2>
+        <div class="month-controls">
+          <button id="prevMonth">‹</button>
+          <span id="calendarMonth"></span>
+          <button id="nextMonth">›</button>
+        </div>
+      </div>
+      <div class="calendar" id="calendar"></div>
+    </section>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

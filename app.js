@@ -5,6 +5,7 @@ const clearFormButton = document.getElementById('clear-form');
 const bookingListBody = document.getElementById('booking-list');
 const totalBookingsEl = document.getElementById('totalBookings');
 const totalNightsEl = document.getElementById('totalNights');
+const totalEarningsEl = document.getElementById('totalEarnings');
 const currentOccupancyEl = document.getElementById('currentOccupancy');
 const calendarEl = document.getElementById('calendar');
 const calendarMonthEl = document.getElementById('calendarMonth');
@@ -41,6 +42,22 @@ function formatDate(value) {
   });
 }
 
+function formatCurrency(value) {
+  return new Intl.NumberFormat(undefined, {
+    style: 'currency',
+    currency: 'GBP',
+  }).format(value);
+}
+
+function getBookingAmountPaid(booking) {
+  const parsedValue = Number(booking.amountPaid || 0);
+  return Number.isFinite(parsedValue) ? parsedValue : 0;
+}
+
+function calculateTotalAmountPaid(bookingsList) {
+  return bookingsList.reduce((sum, booking) => sum + getBookingAmountPaid(booking), 0);
+}
+
 function getBookingNights(booking) {
   const checkIn = parseDate(booking.checkIn);
   const checkOut = parseDate(booking.checkOut);
@@ -66,6 +83,7 @@ function findConflict(checkIn, checkOut, excludeId = null) {
 
 function clearForm() {
   bookingForm.reset();
+  bookingForm.amountPaid.value = '';
   selectedBookingId = null;
   bookingForm.querySelector('button[type="submit"]').textContent = 'Save Booking';
 }
@@ -75,14 +93,17 @@ function fillForm(booking) {
   bookingForm.checkIn.value = booking.checkIn;
   bookingForm.checkOut.value = booking.checkOut;
   bookingForm.notes.value = booking.notes || '';
+  bookingForm.amountPaid.value = booking.amountPaid ?? '';
   selectedBookingId = booking.id;
   bookingForm.querySelector('button[type="submit"]').textContent = 'Update Booking';
 }
 
 function updateSummary() {
   const totalNights = bookings.reduce((sum, booking) => sum + getBookingNights(booking), 0);
+  const totalEarnings = calculateTotalAmountPaid(bookings);
   totalBookingsEl.textContent = bookings.length;
   totalNightsEl.textContent = totalNights;
+  totalEarningsEl.textContent = formatCurrency(totalEarnings);
   currentOccupancyEl.textContent = `${Math.round(calculateCurrentMonthOccupancy())}%`;
 }
 
@@ -122,6 +143,7 @@ function renderBookings() {
       <td>${formatDate(parseDate(booking.checkIn))}</td>
       <td>${formatDate(parseDate(booking.checkOut))}</td>
       <td>${nights}</td>
+      <td>${formatCurrency(getBookingAmountPaid(booking))}</td>
       <td>${booking.notes ? booking.notes : ''}</td>
       <td>
         <button class="action-button" data-action="edit" data-id="${booking.id}">Edit</button>
@@ -221,6 +243,7 @@ function handleFormSubmit(event) {
   const checkIn = bookingForm.checkIn.value;
   const checkOut = bookingForm.checkOut.value;
   const notes = bookingForm.notes.value.trim();
+  const amountPaidInput = bookingForm.amountPaid.value.trim();
 
   if (!guestName || !checkIn || !checkOut) {
     alert('Please fill in the guest name, check-in date, and check-out date.');
@@ -229,9 +252,15 @@ function handleFormSubmit(event) {
 
   const checkInDate = parseDate(checkIn);
   const checkOutDate = parseDate(checkOut);
+  const amountPaid = amountPaidInput === '' ? 0 : Number(amountPaidInput);
 
   if (checkOutDate <= checkInDate) {
     alert('Check-out date must be after check-in date.');
+    return;
+  }
+
+  if (!Number.isFinite(amountPaid) || amountPaid < 0) {
+    alert('Please enter a valid amount paid of 0 or more.');
     return;
   }
 
@@ -245,7 +274,7 @@ function handleFormSubmit(event) {
     return;
   }
 
-  addOrUpdateBooking({ guestName, checkIn, checkOut, notes });
+  addOrUpdateBooking({ guestName, checkIn, checkOut, notes, amountPaid });
   saveBookings();
   renderApp();
   clearForm();
@@ -294,3 +323,10 @@ nextMonthButton.addEventListener('click', () => changeMonth(1));
 
 loadBookings();
 renderApp();
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    calculateTotalAmountPaid,
+    formatCurrency,
+  };
+}

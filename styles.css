@@ -137,6 +137,15 @@ button.danger {
   z-index: 1000;
 }
 
+#edit-modal,
+#delete-modal {
+  z-index: 1100;
+}
+
+#all-bookings-modal {
+  z-index: 1000;
+}
+
 .modal.hidden {
   display: none;
 }

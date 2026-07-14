@@ -171,6 +171,7 @@ function renderAllBookingsModal() {
             <th>Nights</th>
             <th>Paid</th>
             <th>Notes</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -182,6 +183,9 @@ function renderAllBookingsModal() {
               <td>${getBookingNights(booking)}</td>
               <td>${formatCurrency(getBookingAmountPaid(booking))}</td>
               <td>${booking.notes ? booking.notes : ''}</td>
+              <td>
+                <button class="action-button" data-action="edit" data-id="${booking.id}">Edit</button>
+              </td>
             </tr>
           `).join('')}
         </tbody>
@@ -453,23 +457,20 @@ function handleEditFormSubmit(event) {
   closeEditModal();
 }
 
-function handleTableClick(event) {
-  const button = event.target.closest('button');
+function handleBookingAction(event) {
+  const button = event.target.closest('button[data-action]');
   if (!button) return;
 
   const { action, id } = button.dataset;
+  const booking = bookings.find((item) => item.id === id);
+  if (!booking) return;
+
   if (action === 'edit') {
-    const booking = bookings.find((item) => item.id === id);
-    if (booking) {
-      openEditModal(booking);
-    }
+    openEditModal(booking);
   }
 
   if (action === 'delete') {
-    const booking = bookings.find((item) => item.id === id);
-    if (booking) {
-      openDeleteModal(booking);
-    }
+    openDeleteModal(booking);
   }
 }
 
@@ -521,7 +522,10 @@ document.addEventListener('keydown', (event) => {
   }
 });
 if (bookingListBody) {
-  bookingListBody.addEventListener('click', handleTableClick);
+  bookingListBody.addEventListener('click', handleBookingAction);
+}
+if (allBookingsContentEl) {
+  allBookingsContentEl.addEventListener('click', handleBookingAction);
 }
 prevMonthButton.addEventListener('click', () => changeMonth(-1));
 nextMonthButton.addEventListener('click', () => changeMonth(1));

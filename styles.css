@@ -127,6 +127,19 @@ button.danger {
   padding: 14px 18px;
 }
 
+.secondary-action-button {
+  margin-top: 16px;
+  background: #f3f4f6;
+  color: var(--text);
+}
+
+.calendar-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .modal {
   position: fixed;
   inset: 0;

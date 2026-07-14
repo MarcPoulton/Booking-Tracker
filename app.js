@@ -24,6 +24,8 @@ const calendarEl = document.getElementById('calendar');
 const calendarMonthEl = document.getElementById('calendarMonth');
 const prevMonthButton = document.getElementById('prevMonth');
 const nextMonthButton = document.getElementById('nextMonth');
+const exportBookingsButton = document.getElementById('export-bookings-button');
+const importBookingsButton = document.getElementById('import-bookings-button');
 
 let bookings = [];
 let selectedBookingId = null;
@@ -485,6 +487,124 @@ function changeMonth(amount) {
   renderApp();
 }
 
+function buildExportData() {
+  return {
+    exportedAt: new Date().toISOString(),
+    totalBookings: bookings.length,
+    totalNights: bookings.reduce((sum, booking) => sum + getBookingNights(booking), 0),
+    totalEarnings: calculateTotalAmountPaid(bookings),
+    bookings: bookings.map((booking) => ({
+      id: booking.id,
+      guestName: booking.guestName,
+      checkIn: booking.checkIn,
+      checkOut: booking.checkOut,
+      amountPaid: booking.amountPaid ?? 0,
+      notes: booking.notes || '',
+      nights: getBookingNights(booking),
+    })),
+  };
+}
+
+async function exportBookings() {
+  const exportData = buildExportData();
+  const fileContent = JSON.stringify(exportData, null, 2);
+  const fileName = `bookings-export-${new Date().toISOString().slice(0, 10)}.json`;
+
+  if (window.showSaveFilePicker) {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: fileName,
+        types: [
+          {
+            description: 'JSON Files',
+            accept: {
+              'application/json': ['.json'],
+            },
+          },
+        ],
+      });
+      const writable = await handle.createWritable();
+      await writable.write(fileContent);
+      await writable.close();
+      return;
+    } catch (error) {
+      if (error?.name === 'AbortError') {
+        return;
+      }
+    }
+  }
+
+  const blob = new Blob([fileContent], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function importBookingsFromData(importData) {
+  if (!importData || !Array.isArray(importData.bookings)) {
+    throw new Error('Invalid booking export data.');
+  }
+
+  bookings = importData.bookings.map((booking) => ({
+    id: booking.id || Date.now().toString() + Math.random().toString(16).slice(2),
+    guestName: booking.guestName || '',
+    checkIn: booking.checkIn || '',
+    checkOut: booking.checkOut || '',
+    amountPaid: booking.amountPaid ?? 0,
+    notes: booking.notes || '',
+  }));
+
+  saveBookings();
+  renderApp();
+}
+
+async function importBookings() {
+  if (!window.showOpenFilePicker) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/json,.json';
+    input.addEventListener('change', async () => {
+      const [file] = input.files || [];
+      if (!file) {
+        return;
+      }
+
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      importBookingsFromData(parsed);
+    });
+    input.click();
+    return;
+  }
+
+  try {
+    const [handle] = await window.showOpenFilePicker({
+      types: [
+        {
+          description: 'JSON Files',
+          accept: {
+            'application/json': ['.json'],
+          },
+        },
+      ],
+      multiple: false,
+    });
+    const file = await handle.getFile();
+    const text = await file.text();
+    const parsed = JSON.parse(text);
+    importBookingsFromData(parsed);
+  } catch (error) {
+    if (error?.name !== 'AbortError') {
+      throw error;
+    }
+  }
+}
+
 bookingForm.addEventListener('submit', handleFormSubmit);
 editBookingForm.addEventListener('submit', handleEditFormSubmit);
 clearFormButton.addEventListener('click', clearForm);
@@ -529,6 +649,20 @@ if (allBookingsContentEl) {
 }
 prevMonthButton.addEventListener('click', () => changeMonth(-1));
 nextMonthButton.addEventListener('click', () => changeMonth(1));
+if (exportBookingsButton) {
+  exportBookingsButton.addEventListener('click', () => {
+    exportBookings().catch(() => {
+      alert('Export failed. Please try again.');
+    });
+  });
+}
+if (importBookingsButton) {
+  importBookingsButton.addEventListener('click', () => {
+    importBookings().catch(() => {
+      alert('Import failed. Please choose a valid exported bookings file.');
+    });
+  });
+}
 window.addEventListener('beforeunload', saveBookings);
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') {
